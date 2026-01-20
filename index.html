@@ -944,7 +944,63 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
-  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('.my-email-form');
+      
+      if (!form) {
+        console.error("Форма с классом .my-email-form не найдена!");
+        return;
+      }
+    
+      form.onsubmit = async function(event) {
+        event.preventDefault(); // КРИТИЧНО: Останавливаем стандартный переход
+        event.stopPropagation(); // Дополнительная защита
+    
+        const loading = form.querySelector('.loading');
+        const errorMsg = form.querySelector('.error-message');
+        const sentMsg = form.querySelector('.sent-message');
+        const button = form.querySelector('button[type="submit"]');
+    
+        // Сброс состояний
+        loading.style.display = 'block';
+        errorMsg.style.display = 'none';
+        sentMsg.style.display = 'none';
+        button.disabled = true;
+    
+        const formData = new FormData(form);
+    
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+    
+          loading.style.display = 'none';
+    
+          if (response.ok) {
+            sentMsg.style.display = 'block';
+            form.reset(); 
+          } else {
+            const data = await response.json();
+            errorMsg.innerText = data.errors ? data.errors.map(e => e.message).join(", ") : "Error sending message.";
+            errorMsg.style.display = 'block';
+          }
+        } catch (error) {
+          loading.style.display = 'none';
+          errorMsg.innerText = "Network error. Please try again.";
+          errorMsg.style.display = 'block';
+        } finally {
+          button.disabled = false;
+        }
+    
+        return false; // Еще одна страховка от перехода
+      };
+    });
+    </script>
 </body>
 
 </html>
